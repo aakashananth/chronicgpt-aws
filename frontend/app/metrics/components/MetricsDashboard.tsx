@@ -505,7 +505,7 @@ export function MetricsDashboard({
             {/* Column 1: Readiness Score + Selected Date Metrics + Anomaly Flags */}
             <div className="flex-1 min-w-0 flex flex-col gap-4 sm:gap-6">
               {/* Overall Health Readiness Score */}
-              {!error && (selectedMetrics || latest) && viewMode === "overview" && (() => {
+            {!error && (selectedMetrics || latest) && viewMode === "overview" && (() => {
               const currentMetrics = selectedMetrics || latest;
               const readinessScore = currentMetrics?.readiness_score ?? null;
               const isAnomalous = currentMetrics?.is_anomalous || false;
@@ -823,13 +823,13 @@ export function MetricsDashboard({
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 {/* Date Range Controls - Left */}
                 <div className="flex-1 min-w-0">
-                  <DateRangeControls 
-                    onDateRangeChange={handleDateRangeChange} 
-                    defaultDays={30}
-                    latestDate={allMetrics.length > 0 ? allMetrics[allMetrics.length - 1].metric_date : undefined}
-                    darkMode={darkMode}
+              <DateRangeControls 
+                onDateRangeChange={handleDateRangeChange} 
+                defaultDays={30}
+                latestDate={allMetrics.length > 0 ? allMetrics[allMetrics.length - 1].metric_date : undefined}
+                darkMode={darkMode}
                     noCard={true}
-                  />
+              />
                 </div>
 
                 {/* Chart Filter Controls - Right */}
@@ -883,44 +883,44 @@ export function MetricsDashboard({
             {/* Individual Metric Charts */}
             <div className={selectedChart === "all" ? "grid grid-cols-1 lg:grid-cols-2 gap-4" : "w-full"}>
               {(selectedChart === "all" || selectedChart === "hrv") && (
-                <MetricsChart
-                  data={metrics}
-                  dataKey="hrv"
-                  label="HRV Trend"
-                  color="#3b82f6"
-                  yAxisLabel="HRV (ms)"
-                  darkMode={darkMode}
-                />
+              <MetricsChart
+                data={metrics}
+                dataKey="hrv"
+                label="HRV Trend"
+                color="#3b82f6"
+                yAxisLabel="HRV (ms)"
+                darkMode={darkMode}
+              />
               )}
               {(selectedChart === "all" || selectedChart === "resting_hr") && (
-                <MetricsChart
-                  data={metrics}
-                  dataKey="resting_hr"
-                  label="Resting Heart Rate Trend"
-                  color="#ef4444"
-                  yAxisLabel="BPM"
-                  darkMode={darkMode}
-                />
+              <MetricsChart
+                data={metrics}
+                dataKey="resting_hr"
+                label="Resting Heart Rate Trend"
+                color="#ef4444"
+                yAxisLabel="BPM"
+                darkMode={darkMode}
+              />
               )}
               {(selectedChart === "all" || selectedChart === "sleep_score") && (
-                <MetricsChart
-                  data={metrics}
-                  dataKey="sleep_score"
-                  label="Sleep Score Trend"
-                  color="#10b981"
-                  yAxisLabel="Score"
-                  darkMode={darkMode}
-                />
+              <MetricsChart
+                data={metrics}
+                dataKey="sleep_score"
+                label="Sleep Score Trend"
+                color="#10b981"
+                yAxisLabel="Score"
+                darkMode={darkMode}
+              />
               )}
               {(selectedChart === "all" || selectedChart === "steps") && (
-                <MetricsChart
-                  data={metrics}
-                  dataKey="steps"
-                  label="Steps Trend"
-                  color="#f59e0b"
-                  yAxisLabel="Steps"
-                  darkMode={darkMode}
-                />
+              <MetricsChart
+                data={metrics}
+                dataKey="steps"
+                label="Steps Trend"
+                color="#f59e0b"
+                yAxisLabel="Steps"
+                darkMode={darkMode}
+              />
               )}
             </div>
           </div>
@@ -993,7 +993,7 @@ export function MetricsDashboard({
             <div className="flex items-center justify-between mb-4">
               <h2 className={`text-xl font-semibold ${theme.text}`}>Daily AI Summary</h2>
               {explanation && (
-                <span className={`text-sm ${theme.textSecondary}`}>{formatDate(explanation.date)}</span>
+              <span className={`text-sm ${theme.textSecondary}`}>{formatDate(explanation.date)}</span>
               )}
             </div>
             
@@ -1018,39 +1018,39 @@ export function MetricsDashboard({
             
             {explanation && !explanationLoading && (
               <>
-                <div className={`prose max-w-none ${darkMode ? "prose-invert" : ""}`}>
-                  <p className={`${theme.textSecondary} leading-relaxed whitespace-pre-wrap`}>
-                    {explanation.explanation}
-                  </p>
+            <div className={`prose max-w-none ${darkMode ? "prose-invert" : ""}`}>
+              <p className={`${theme.textSecondary} leading-relaxed whitespace-pre-wrap`}>
+                {explanation.explanation}
+              </p>
+            </div>
+            {explanation.insights && explanation.insights.length > 0 && (
+              <div className={`mt-4 pt-4 border-t ${theme.border}`}>
+                <h3 className={`text-sm font-medium ${theme.textSecondary} mb-2`}>Key Insights</h3>
+                <ul className={`list-disc list-inside space-y-1 text-sm ${theme.textSecondary}`}>
+                  {explanation.insights.map((insight, index) => (
+                    <li key={index}>{insight}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {explanation.flags && explanation.flags.length > 0 && (
+              <div className={`mt-4 pt-4 border-t ${theme.border}`}>
+                <h3 className={`text-sm font-medium ${theme.textSecondary} mb-2`}>Flags</h3>
+                <div className="flex flex-wrap gap-2">
+                  {explanation.flags.map((flag, index) => (
+                    <span
+                      key={index}
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                        darkMode
+                          ? "bg-yellow-900/50 text-yellow-300 border-yellow-800/50"
+                          : "bg-yellow-100 text-yellow-800 border-yellow-300"
+                      }`}
+                    >
+                      {flag}
+                    </span>
+                  ))}
                 </div>
-                {explanation.insights && explanation.insights.length > 0 && (
-                  <div className={`mt-4 pt-4 border-t ${theme.border}`}>
-                    <h3 className={`text-sm font-medium ${theme.textSecondary} mb-2`}>Key Insights</h3>
-                    <ul className={`list-disc list-inside space-y-1 text-sm ${theme.textSecondary}`}>
-                      {explanation.insights.map((insight, index) => (
-                        <li key={index}>{insight}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {explanation.flags && explanation.flags.length > 0 && (
-                  <div className={`mt-4 pt-4 border-t ${theme.border}`}>
-                    <h3 className={`text-sm font-medium ${theme.textSecondary} mb-2`}>Flags</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {explanation.flags.map((flag, index) => (
-                        <span
-                          key={index}
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                            darkMode
-                              ? "bg-yellow-900/50 text-yellow-300 border-yellow-800/50"
-                              : "bg-yellow-100 text-yellow-800 border-yellow-300"
-                          }`}
-                        >
-                          {flag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+              </div>
                 )}
               </>
             )}

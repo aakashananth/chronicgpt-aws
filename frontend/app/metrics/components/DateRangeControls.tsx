@@ -77,65 +77,65 @@ export function DateRangeControls({ onDateRangeChange, defaultDays = 30, latestD
 
   const content = (
     <div className={`flex ${noCard ? 'flex-col sm:flex-row sm:items-center' : 'flex-col sm:flex-row sm:items-center sm:justify-between'} gap-4`}>
-      <div className="flex items-center gap-2">
-        <span className={`text-sm ${theme.textSecondary}`}>Time Range:</span>
-        <div className="flex gap-2">
-          {presets.map((preset) => (
-            <button
-              key={preset.value}
-              onClick={() => handlePresetChange(preset.value)}
+        <div className="flex items-center gap-2">
+          <span className={`text-sm ${theme.textSecondary}`}>Time Range:</span>
+          <div className="flex gap-2">
+            {presets.map((preset) => (
+              <button
+                key={preset.value}
+                onClick={() => handlePresetChange(preset.value)}
               className={`px-3 py-1.5 text-xs font-medium rounded transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                selectedPreset === preset.value
-                  ? darkMode
+                  selectedPreset === preset.value
+                    ? darkMode
                     ? "bg-blue-600 text-white focus:ring-offset-blue-600"
                     : "bg-blue-500 text-white focus:ring-offset-blue-500"
                   : theme.button + (darkMode ? " focus:ring-offset-black" : " focus:ring-offset-white")
-              }`}
+                }`}
               aria-pressed={selectedPreset === preset.value}
-            >
-              {preset.label}
-            </button>
-          ))}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {showCustom && (
-        <div className="flex items-center gap-2">
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
+        {showCustom && (
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
             className={`px-3 py-1.5 text-sm rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 ${
-              darkMode
+                darkMode
                 ? `${theme.input} [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:contrast-100 focus:ring-offset-black`
                 : `${theme.input} focus:ring-offset-white`
-            }`}
-          />
-          <span className={theme.textSecondary}>to</span>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
+              }`}
+            />
+            <span className={theme.textSecondary}>to</span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
             className={`px-3 py-1.5 text-sm rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 ${
-              darkMode
+                darkMode
                 ? `${theme.input} [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:contrast-100 focus:ring-offset-black`
                 : `${theme.input} focus:ring-offset-white`
-            }`}
-          />
-          <button
-            onClick={handleApplyCustomRange}
-            disabled={!startDate || !endDate}
+              }`}
+            />
+            <button
+              onClick={handleApplyCustomRange}
+              disabled={!startDate || !endDate}
             className={`px-4 py-1.5 text-sm font-medium rounded transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-              darkMode
+                darkMode
                 ? "bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-700 disabled:text-gray-500 focus:ring-offset-black"
                 : "bg-blue-500 text-white hover:bg-blue-600 disabled:bg-gray-300 disabled:text-gray-500 focus:ring-offset-white"
-            } disabled:cursor-not-allowed`}
-          >
-            Apply
-          </button>
-        </div>
-      )}
-    </div>
+              } disabled:cursor-not-allowed`}
+            >
+              Apply
+            </button>
+          </div>
+        )}
+      </div>
   );
 
   if (noCard) {

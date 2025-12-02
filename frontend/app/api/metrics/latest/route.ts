@@ -1,9 +1,18 @@
 /**
  * API endpoint to fetch health metrics from Amazon Athena.
  * 
- * Queries the v_metrics_latest_daily view in health_metrics_db for the last 30 days.
+ * Queries the configured Athena view (ATHENA_VIEW_NAME) in the configured database (ATHENA_DATABASE_NAME)
+ * for the last 30 days (or custom date range).
  * Returns metrics including HRV, resting heart rate, sleep score, steps, recovery index,
  * movement index, and anomaly detection flags.
+ * 
+ * Required environment variables:
+ * - AWS_REGION
+ * - AWS_ACCESS_KEY_ID
+ * - AWS_SECRET_ACCESS_KEY
+ * - ATHENA_DATABASE_NAME (defaults to "health_metrics_db")
+ * - ATHENA_VIEW_NAME (defaults to "v_metrics_latest_daily")
+ * - ATHENA_OUTPUT_LOCATION (defaults to "s3://health-results-athena/")
  * 
  * @route GET /api/metrics/latest
  * @returns JSON array of metric objects with date and health metric values
@@ -20,14 +29,16 @@ import {
 
 // Initialize Athena client with credentials from environment variables
 const getAthenaClient = () => {
-  const region = process.env.AWS_REGION || "us-east-1";
+  if (!process.env.AWS_REGION) {
+    throw new Error("AWS_REGION environment variable is required");
+  }
   
   if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
     throw new Error("AWS credentials not configured. Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables.");
   }
 
   return new AthenaClient({
-    region,
+    region: process.env.AWS_REGION,
     credentials: {
       accessKeyId: process.env.AWS_ACCESS_KEY_ID,
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -241,11 +252,17 @@ export async function GET(request: Request) {
 
     let query: string;
     
+    // Get configuration from environment variables
+    const databaseName = process.env.ATHENA_DATABASE_NAME || "health_metrics_db";
+    const viewName = process.env.ATHENA_VIEW_NAME || "v_metrics_latest_daily";
+    const outputLocation = process.env.ATHENA_OUTPUT_LOCATION || "s3://health-results-athena/";
+    const workgroup = process.env.ATHENA_WORKGROUP;
+    
     if (startDate && endDate) {
       // Custom date range
       query = `
         SELECT *
-        FROM health_metrics_db.v_metrics_latest_daily
+        FROM ${databaseName}.${viewName}
         WHERE metric_date >= DATE '${startDate}'
           AND metric_date <= DATE '${endDate}'
         ORDER BY metric_date;
@@ -255,7 +272,7 @@ export async function GET(request: Request) {
       const daysNum = Number.parseInt(days, 10);
       query = `
         SELECT *
-        FROM health_metrics_db.v_metrics_latest_daily
+        FROM ${databaseName}.${viewName}
         WHERE metric_date >= date_add('day', -${daysNum - 1}, current_date)
           AND metric_date <= current_date
         ORDER BY metric_date;
@@ -264,24 +281,23 @@ export async function GET(request: Request) {
       // Default: last 30 days
       query = `
         SELECT *
-        FROM health_metrics_db.v_metrics_latest_daily
+        FROM ${databaseName}.${viewName}
         WHERE metric_date >= date_add('day', -29, current_date)
           AND metric_date <= current_date
         ORDER BY metric_date;
       `;
     }
 
-    const outputLocation = "s3://health-results-athena/";
-
     // Start query execution
     const startCommand = new StartQueryExecutionCommand({
       QueryString: query,
       QueryExecutionContext: {
-        Database: "health_metrics_db",
+        Database: databaseName,
       },
       ResultConfiguration: {
         OutputLocation: outputLocation,
       },
+      ...(workgroup && { WorkGroup: workgroup }),
     });
 
     console.log("[Athena] Starting query execution...");

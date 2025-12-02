@@ -4,6 +4,13 @@
  * Fetches the explanation file for the specified date from the S3 bucket.
  * Returns the explanation text, insights, and flags.
  * 
+ * Required environment variables:
+ * - AWS_REGION
+ * - AWS_ACCESS_KEY_ID
+ * - AWS_SECRET_ACCESS_KEY
+ * - EXPLANATIONS_BUCKET_NAME or HEALTH_RESULTS_PROCESSED_BUCKET
+ * - ULTRAHUMAN_PATIENT_ID or ULTRAHUMAN_EMAIL
+ * 
  * @route GET /api/explanations/[date]
  * @param date - Date in YYYY-MM-DD format
  * @returns JSON object with date, explanation, insights, and flags
@@ -14,14 +21,16 @@ import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 
 // Initialize S3 client with credentials from environment variables
 const getS3Client = () => {
-  const region = process.env.AWS_REGION || "us-east-1";
+  if (!process.env.AWS_REGION) {
+    throw new Error("AWS_REGION environment variable is required");
+  }
   
   if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
     throw new Error("AWS credentials not configured. Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables.");
   }
 
   return new S3Client({
-    region,
+    region: process.env.AWS_REGION,
     credentials: {
       accessKeyId: process.env.AWS_ACCESS_KEY_ID,
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -56,12 +65,17 @@ export async function GET(
       );
     }
     
-    // Get patient ID from environment variable or use default
-    const patientId = process.env.ULTRAHUMAN_PATIENT_ID || process.env.ULTRAHUMAN_EMAIL || "default";
+    // Get patient ID from environment variable (required)
+    if (!process.env.ULTRAHUMAN_PATIENT_ID && !process.env.ULTRAHUMAN_EMAIL) {
+      throw new Error("ULTRAHUMAN_PATIENT_ID or ULTRAHUMAN_EMAIL environment variable is required");
+    }
+    const patientId = process.env.ULTRAHUMAN_PATIENT_ID || process.env.ULTRAHUMAN_EMAIL!;
     
-    // S3 bucket and key
-    // Use EXPLANATIONS_BUCKET_NAME if set, otherwise fallback to health-results-processed
-    const bucketName = process.env.EXPLANATIONS_BUCKET_NAME || process.env.HEALTH_RESULTS_PROCESSED_BUCKET || "health-results-processed";
+    // S3 bucket name (required)
+    if (!process.env.EXPLANATIONS_BUCKET_NAME && !process.env.HEALTH_RESULTS_PROCESSED_BUCKET) {
+      throw new Error("EXPLANATIONS_BUCKET_NAME or HEALTH_RESULTS_PROCESSED_BUCKET environment variable is required");
+    }
+    const bucketName = process.env.EXPLANATIONS_BUCKET_NAME || process.env.HEALTH_RESULTS_PROCESSED_BUCKET!;
     const key = `${patientId}/${date}.json`;
     
     console.log(`[S3] Fetching explanation from s3://${bucketName}/${key}`);
