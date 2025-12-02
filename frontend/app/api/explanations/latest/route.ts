@@ -48,6 +48,29 @@ function getYesterdayDate(): string {
 
 export async function GET() {
   try {
+    // Validate required environment variables before proceeding
+    const missingVars: string[] = [];
+    if (!process.env.AWS_REGION) missingVars.push("AWS_REGION");
+    if (!process.env.AWS_ACCESS_KEY_ID) missingVars.push("AWS_ACCESS_KEY_ID");
+    if (!process.env.AWS_SECRET_ACCESS_KEY) missingVars.push("AWS_SECRET_ACCESS_KEY");
+    if (!process.env.EXPLANATIONS_BUCKET_NAME && !process.env.HEALTH_RESULTS_PROCESSED_BUCKET) {
+      missingVars.push("EXPLANATIONS_BUCKET_NAME or HEALTH_RESULTS_PROCESSED_BUCKET");
+    }
+    if (!process.env.ULTRAHUMAN_PATIENT_ID && !process.env.ULTRAHUMAN_EMAIL) {
+      missingVars.push("ULTRAHUMAN_PATIENT_ID or ULTRAHUMAN_EMAIL");
+    }
+    
+    if (missingVars.length > 0) {
+      return NextResponse.json(
+        {
+          error: "Missing required environment variables",
+          details: `The following environment variables are missing: ${missingVars.join(", ")}`,
+          missingVariables: missingVars,
+        },
+        { status: 500 }
+      );
+    }
+    
     const s3Client = getS3Client();
     
     // Get yesterday's date
@@ -118,11 +141,23 @@ export async function GET() {
     }
     
     const errorMessage = error?.message || "Unknown error occurred";
+    const statusCode = error?.$metadata?.httpStatusCode || 500;
+    
+    // Provide more helpful error messages
+    let helpfulMessage = errorMessage;
+    if (errorMessage.includes("credentials")) {
+      helpfulMessage = "AWS credentials are missing or invalid. Check AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY.";
+    } else if (errorMessage.includes("region")) {
+      helpfulMessage = "AWS region is not configured. Set AWS_REGION environment variable.";
+    } else if (errorMessage.includes("AccessDenied") || errorMessage.includes("permission")) {
+      helpfulMessage = "AWS credentials don't have permission to access S3. Check IAM permissions.";
+    }
     
     return NextResponse.json(
       {
         error: "Failed to fetch explanation from S3",
-        details: errorMessage,
+        details: helpfulMessage,
+        originalError: errorMessage,
       },
       { status: 500 }
     );

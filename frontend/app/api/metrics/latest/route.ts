@@ -242,6 +242,23 @@ function normalizeMetric(raw: Record<string, any>): HealthMetricRow {
 
 export async function GET(request: Request) {
   try {
+    // Validate required environment variables before proceeding
+    const missingVars: string[] = [];
+    if (!process.env.AWS_REGION) missingVars.push("AWS_REGION");
+    if (!process.env.AWS_ACCESS_KEY_ID) missingVars.push("AWS_ACCESS_KEY_ID");
+    if (!process.env.AWS_SECRET_ACCESS_KEY) missingVars.push("AWS_SECRET_ACCESS_KEY");
+    
+    if (missingVars.length > 0) {
+      return NextResponse.json(
+        {
+          error: "Missing required environment variables",
+          details: `The following environment variables are missing: ${missingVars.join(", ")}`,
+          missingVariables: missingVars,
+        },
+        { status: 500 }
+      );
+    }
+    
     const client = getAthenaClient();
 
     // Parse query parameters for date range
@@ -351,12 +368,23 @@ export async function GET(request: Request) {
     console.error("[Athena] Error:", error);
     
     const errorMessage = error?.message || "Unknown error occurred";
-    const statusCode = 500;
+    const statusCode = error?.$metadata?.httpStatusCode || 500;
+    
+    // Provide more helpful error messages
+    let helpfulMessage = errorMessage;
+    if (errorMessage.includes("credentials")) {
+      helpfulMessage = "AWS credentials are missing or invalid. Check AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY.";
+    } else if (errorMessage.includes("region")) {
+      helpfulMessage = "AWS region is not configured. Set AWS_REGION environment variable.";
+    } else if (errorMessage.includes("AccessDenied") || errorMessage.includes("permission")) {
+      helpfulMessage = "AWS credentials don't have permission to query Athena. Check IAM permissions.";
+    }
 
     return NextResponse.json(
       {
         error: "Failed to fetch metrics from Athena",
-        details: errorMessage,
+        details: helpfulMessage,
+        originalError: errorMessage,
       },
       { status: statusCode }
     );
