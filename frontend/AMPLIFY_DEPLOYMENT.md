@@ -52,13 +52,15 @@ NEXT_PUBLIC_BASE_URL=https://your-amplify-domain.amplifyapp.com
    - Click "New app" > "Host web app"
    - Connect your GitHub repository
    - Select the `chronicgpt-aws` repository
-   - **Important**: Set the root directory to `frontend` in the build settings
+   - **Important**: Leave the root directory as the repository root (do NOT set it to `frontend`)
+   - Amplify will detect this as a monorepo and use the `amplify.yml` at the root
 
 2. **Configure Build Settings**
    - Amplify will auto-detect Next.js
-   - The `amplify.yml` file in the `frontend` directory will be used automatically
+   - The `amplify.yml` file at the repository root will be used automatically
+   - The `appRoot: frontend` setting tells Amplify where your Next.js app is located
    - Build command: `npm run build` (auto-detected)
-   - Output directory: `.next` (auto-detected)
+   - Output directory: `frontend/.next` (auto-detected)
 
 3. **Set Environment Variables**
    - Go to **App settings > Environment variables**
