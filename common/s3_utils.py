@@ -75,7 +75,7 @@ def upload_json_to_s3(
     bucket = _get_bucket_name(bucket_type)
 
     try:
-        body = json.dumps(data, default=str, indent=2)
+        body = json.dumps(data, default=str, separators=(',', ':'))  # Compact JSON for Athena compatibility
         extra_args = {}
         if metadata:
             extra_args["Metadata"] = {k: str(v) for k, v in metadata.items()}

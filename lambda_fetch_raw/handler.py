@@ -1,7 +1,7 @@
 """Lambda handler for fetching raw Ultrahuman data."""
 
 import json
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Any, Dict
 
 from common.config import settings
@@ -18,8 +18,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     Expected event structure:
     {
         "patient_id": "patient123",
-        "date": "2024-01-15"  # Optional, defaults to today
+        "date": "2024-01-15"  # Optional, defaults to yesterday
     }
+
+    Also supports API Gateway events where body is a JSON string.
 
     Args:
         event: Lambda event dictionary.
@@ -29,16 +31,27 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         Dictionary with status and metadata.
     """
     try:
+        # Handle API Gateway events (body is a JSON string)
+        if isinstance(event.get("body"), str):
+            try:
+                event = json.loads(event["body"])
+            except json.JSONDecodeError:
+                pass  # Fall through to regular handling
+
         # Extract parameters from event
         patient_id = event.get("patient_id") or settings.ULTRAHUMAN_PATIENT_ID
         if not patient_id:
-            raise ValueError("patient_id must be provided in event or environment variables")
+            error_msg = (
+                "patient_id must be provided in event or as ULTRAHUMAN_PATIENT_ID environment variable. "
+                f"Event keys: {list(event.keys())}, Env var set: {bool(settings.ULTRAHUMAN_PATIENT_ID)}"
+            )
+            raise ValueError(error_msg)
 
         date_str = event.get("date")
         if date_str:
             target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
         else:
-            target_date = date.today()
+            target_date = date.today() - timedelta(days=1)  # Default to yesterday
 
         logger.info(f"Fetching raw data for patient {patient_id} on {target_date}")
 

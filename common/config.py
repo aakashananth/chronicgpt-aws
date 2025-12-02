@@ -8,11 +8,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
-    # Ultrahuman API configuration
-    ULTRAHUMAN_API_BASE_URL: str = ""
-    ULTRAHUMAN_API_KEY: str = ""
-    ULTRAHUMAN_EMAIL: str = ""
-    ULTRAHUMAN_PATIENT_ID: Optional[str] = None
+    # Ultrahuman UltraSignal API configuration
+    # Base URL: https://partner.ultrahuman.com/api/v1/metrics
+    ULTRAHUMAN_API_BASE_URL: str = "https://partner.ultrahuman.com/api/v1/metrics"
+    ULTRAHUMAN_API_KEY: str = ""  # Authorization key provided by Ultrahuman
+    ULTRAHUMAN_EMAIL: str = ""  # User email (used as identifier in API)
+    ULTRAHUMAN_PATIENT_ID: Optional[str] = None  # Alias for email, defaults to ULTRAHUMAN_EMAIL
 
     # AWS S3 configuration - separate buckets for each data type
     RAW_DATA_BUCKET_NAME: str = "ultrahuman-raw-data"

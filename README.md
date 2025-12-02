@@ -67,10 +67,10 @@ chronicgpt-aws/
 Each Lambda function requires the following environment variables:
 
 ### Common Variables (all Lambdas)
-- `ULTRAHUMAN_API_BASE_URL`: Base URL for Ultrahuman API
-- `ULTRAHUMAN_API_KEY`: API key/token for Ultrahuman API
-- `ULTRAHUMAN_EMAIL`: Email associated with Ultrahuman account
-- `ULTRAHUMAN_PATIENT_ID`: Patient identifier (optional, defaults to email)
+- `ULTRAHUMAN_API_BASE_URL`: Base URL for Ultrahuman UltraSignal API (default: `https://partner.ultrahuman.com/api/v1/metrics`)
+- `ULTRAHUMAN_API_KEY`: Authorization key provided by Ultrahuman (required)
+- `ULTRAHUMAN_EMAIL`: User email address (used as identifier in API calls)
+- `ULTRAHUMAN_PATIENT_ID`: User email identifier (optional, defaults to `ULTRAHUMAN_EMAIL`)
 - `RAW_DATA_BUCKET_NAME`: S3 bucket for raw data (default: `ultrahuman-raw-data`)
 - `PROCESSED_DATA_BUCKET_NAME`: S3 bucket for processed data (default: `health-metrics-processed`)
 - `EXPLANATIONS_BUCKET_NAME`: S3 bucket for explanations (default: `health-llm-explanations`)
@@ -202,8 +202,8 @@ aws lambda create-function \
   --timeout 60 \
   --memory-size 256 \
   --environment Variables="{
-    ULTRAHUMAN_API_BASE_URL=https://api.ultrahuman.com,
-    ULTRAHUMAN_API_KEY=your_api_key,
+    ULTRAHUMAN_API_BASE_URL=https://partner.ultrahuman.com/api/v1/metrics,
+    ULTRAHUMAN_API_KEY=your_authorization_key,
     ULTRAHUMAN_EMAIL=your_email@example.com,
     RAW_DATA_BUCKET_NAME=ultrahuman-raw-data,
     LOG_LEVEL=INFO

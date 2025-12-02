@@ -24,25 +24,32 @@ class UltrahumanClient:
 
         Args:
             api_base_url: API base URL (defaults to settings.ULTRAHUMAN_API_BASE_URL).
-            api_key: API key/token (defaults to settings.ULTRAHUMAN_API_KEY).
-            patient_id: Patient ID (defaults to settings.ULTRAHUMAN_PATIENT_ID or ULTRAHUMAN_EMAIL).
+                Should be: https://partner.ultrahuman.com/api/v1/metrics
+            api_key: Authorization key (defaults to settings.ULTRAHUMAN_API_KEY).
+            patient_id: User email (defaults to settings.ULTRAHUMAN_PATIENT_ID or ULTRAHUMAN_EMAIL).
+                The API uses email as the identifier.
         """
         self.api_base_url = api_base_url or settings.ULTRAHUMAN_API_BASE_URL
         self.api_key = api_key or settings.ULTRAHUMAN_API_KEY
+        # Use email as patient_id (API uses email to identify users)
         self.patient_id = patient_id or settings.ULTRAHUMAN_PATIENT_ID or settings.ULTRAHUMAN_EMAIL
 
         if not self.api_base_url or not self.api_key or not self.patient_id:
             raise ValueError(
-                "ULTRAHUMAN_API_BASE_URL, ULTRAHUMAN_API_KEY, and ULTRAHUMAN_PATIENT_ID must be set"
+                "ULTRAHUMAN_API_BASE_URL, ULTRAHUMAN_API_KEY, and ULTRAHUMAN_PATIENT_ID (or ULTRAHUMAN_EMAIL) must be set"
             )
 
         self.headers = {
-            "Authorization": self.api_key,  # No "Bearer" prefix needed
-            "Content-Type": "application/json",
+            "Authorization": self.api_key,  # Authorization key (no "Bearer" prefix)
         }
 
     def fetch_metrics_for_date(self, target_date: date) -> Optional[Dict[str, Any]]:
         """Fetch health metrics for a specific date.
+
+        According to Ultrahuman UltraSignal API documentation:
+        - Endpoint: GET https://partner.ultrahuman.com/api/v1/metrics
+        - Query params: email (user email), date (YYYY-MM-DD)
+        - Header: Authorization (authorization key)
 
         Args:
             target_date: Date to fetch metrics for.
@@ -51,14 +58,18 @@ class UltrahumanClient:
             Raw metrics dictionary, or None if not found/error.
         """
         try:
-            # Format date as YYYY-MM-DD
+            # Format date as YYYY-MM-DD (ISO 8601 format)
             date_str = target_date.strftime("%Y-%m-%d")
 
-            # Construct API endpoint (adjust based on actual Ultrahuman API)
-            url = f"{self.api_base_url}/patients/{self.patient_id}/metrics"
-            params = {"date": date_str}
+            # API endpoint: https://partner.ultrahuman.com/api/v1/metrics
+            # Query parameters: email and date
+            url = self.api_base_url
+            params = {
+                "email": self.patient_id,  # API uses email to identify users
+                "date": date_str,
+            }
 
-            logger.info(f"Fetching metrics for {date_str} from Ultrahuman API")
+            logger.info(f"Fetching metrics for email {self.patient_id} on {date_str} from Ultrahuman API")
 
             response = requests.get(url, headers=self.headers, params=params, timeout=30)
 

@@ -1,60 +1,62 @@
-#!/bin/bash
-# Build Lambda deployment packages using Docker
-# This ensures dependencies are built for the correct architecture (arm64)
+#!/usr/bin/env bash
+set -euo pipefail
 
-set -e
+# Always run from this script's directory
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$ROOT_DIR"
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
-
-# Colors for output
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
-echo -e "${BLUE}Building Lambda deployment packages using Docker...${NC}"
-echo -e "${BLUE}Using Python 3.11 arm64 Lambda base image${NC}"
-echo ""
-
-# Create dist directory
+echo "▶ Cleaning old build artifacts..."
+rm -rf dist layer_build
 mkdir -p dist
-rm -rf dist/*
+mkdir -p layer_build/python
 
-# Use AWS Lambda Python 3.11 arm64 base image
-LAMBDA_IMAGE="public.ecr.aws/lambda/python:3.11-arm64"
-
-echo -e "${YELLOW}Installing dependencies in Docker container...${NC}"
-
-# Run Docker container to install dependencies and build packages
+echo "▶ Building dependency layer in Docker..."
+# Uses the official Lambda Python 3.11 ARM image so binaries match Lambda
 docker run --rm \
-    -v "$SCRIPT_DIR:/app" \
-    -w /app \
-    "$LAMBDA_IMAGE" \
-    /bin/bash -c "
-        set -e
-        echo 'Installing build tools...'
-        yum install -y zip gcc gcc-c++ python3-devel 2>/dev/null || apt-get update && apt-get install -y zip gcc g++ python3-dev 2>/dev/null || true
-        
-        echo 'Installing Python dependencies...'
-        mkdir -p packages
-        pip install --upgrade pip
-        pip install -r requirements.txt -t packages --no-cache-dir
-        
-        echo 'Building Lambda ZIP packages...'
-        python3 build_lambdas.py packages
-        
-        echo ''
-        echo 'Build complete!'
-    "
+  -v "$PWD":/var/task \
+  --entrypoint /bin/bash \
+  public.ecr.aws/lambda/python:3.11-arm64 \
+  -c "
+    set -e
+    cd /var/task
+    pip install --upgrade pip >/dev/null
+    pip install -r requirements.txt -t layer_build/python
+  "
 
-echo ""
-echo -e "${GREEN}✓ All Lambda packages built successfully!${NC}"
-echo -e "${BLUE}Packages are in: dist/${NC}"
-ls -lh dist/*.zip
+echo "▶ Packaging Lambda layer..."
+(
+  cd layer_build
+  zip -r ../dist/layer_health_metrics_python311.zip . >/dev/null
+)
 
-# Display package sizes
-echo ""
-echo -e "${BLUE}Package sizes:${NC}"
-du -h dist/*.zip
+build_lambda() {
+  local name="$1"
+  local tmp_dir="dist/${name}_tmp"
+
+  echo "▶ Packaging function: ${name}"
+
+  rm -rf "$tmp_dir"
+  mkdir -p "$tmp_dir"
+
+  # Copy shared code
+  cp -r common "$tmp_dir/common"
+
+  # Copy this function's handler
+  cp "${name}/handler.py" "$tmp_dir/handler.py"
+
+  # Create the zip right next to it
+  (
+    cd "$tmp_dir"
+    zip -r "../${name}.zip" . >/dev/null
+  )
+
+  rm -rf "$tmp_dir"
+}
+
+build_lambda "lambda_fetch_raw"
+build_lambda "lambda_process_metrics"
+build_lambda "lambda_generate_explanation"
+
+echo "✅ Done. Built packages in ./dist:"
+ls -lh dist
 

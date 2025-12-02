@@ -1,7 +1,7 @@
 """Lambda handler for generating LLM explanations."""
 
 import json
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Any, Dict, List
 
 from openai import AzureOpenAI
@@ -150,7 +150,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     Expected event structure:
     {
         "patient_id": "patient123",
-        "date": "2024-01-15"  # Optional, defaults to today
+        "date": "2024-01-15"  # Optional, defaults to yesterday
     }
 
     Args:
@@ -170,7 +170,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         if date_str:
             target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
         else:
-            target_date = date.today()
+            target_date = date.today() - timedelta(days=1)  # Default to yesterday
 
         logger.info(f"Generating explanation for patient {patient_id} on {target_date}")
 
