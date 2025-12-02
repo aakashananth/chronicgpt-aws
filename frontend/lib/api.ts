@@ -60,7 +60,10 @@ export async function fetchLatestMetrics(): Promise<HealthMetricRow[]> {
         baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
       } else if (process.env.VERCEL_URL) {
         baseUrl = `https://${process.env.VERCEL_URL}`;
+      } else if (process.env.AWS_AMPLIFY_URL) {
+        baseUrl = process.env.AWS_AMPLIFY_URL;
       } else {
+        // Fallback: try to construct from request headers or use localhost
         baseUrl = `http://localhost:${process.env.PORT || 3000}`;
       }
       url = `${baseUrl}/api/metrics/latest`;
@@ -135,7 +138,10 @@ export async function fetchLatestExplanation(): Promise<ExplanationResponse> {
         baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
       } else if (process.env.VERCEL_URL) {
         baseUrl = `https://${process.env.VERCEL_URL}`;
+      } else if (process.env.AWS_AMPLIFY_URL) {
+        baseUrl = process.env.AWS_AMPLIFY_URL;
       } else {
+        // Fallback: try to construct from request headers or use localhost
         baseUrl = `http://localhost:${process.env.PORT || 3000}`;
       }
       url = `${baseUrl}/api/explanations/latest`;
@@ -215,7 +221,10 @@ export async function fetchExplanationByDate(date: string): Promise<ExplanationR
         baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
       } else if (process.env.VERCEL_URL) {
         baseUrl = `https://${process.env.VERCEL_URL}`;
+      } else if (process.env.AWS_AMPLIFY_URL) {
+        baseUrl = process.env.AWS_AMPLIFY_URL;
       } else {
+        // Fallback: try to construct from request headers or use localhost
         baseUrl = `http://localhost:${process.env.PORT || 3000}`;
       }
       url = `${baseUrl}/api/explanations/${encodedDate}`;

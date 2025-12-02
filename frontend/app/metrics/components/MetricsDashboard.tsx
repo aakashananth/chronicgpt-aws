@@ -12,6 +12,7 @@ interface MetricsDashboardProps {
   initialMetrics: HealthMetricRow[];
   initialExplanation: ExplanationResponse | null;
   patientId: string;
+  initialError?: string | null;
 }
 
 /**
@@ -21,6 +22,7 @@ export function MetricsDashboard({
   initialMetrics,
   initialExplanation,
   patientId,
+  initialError = null,
 }: MetricsDashboardProps) {
   // Store all loaded metrics (up to 30 days)
   const [allMetrics, setAllMetrics] = useState<HealthMetricRow[]>(initialMetrics);
@@ -30,7 +32,7 @@ export function MetricsDashboard({
   const [explanationLoading, setExplanationLoading] = useState(false);
   const [explanationError, setExplanationError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(initialError);
   // Initialize selectedDate to the latest available date (or today if no data)
   const getDefaultDate = () => {
     if (initialMetrics.length > 0) {
