@@ -20,20 +20,25 @@ import { NextResponse } from "next/server";
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 
 // Initialize S3 client with credentials from environment variables
+// Note: Amplify doesn't allow AWS_ prefixed variables, so we use AMPLIFY_AWS_ prefix
 const getS3Client = () => {
-  if (!process.env.AWS_REGION) {
-    throw new Error("AWS_REGION environment variable is required");
+  const region = process.env.AMPLIFY_AWS_REGION || process.env.AWS_REGION;
+  const accessKeyId = process.env.AMPLIFY_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.AMPLIFY_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
+  
+  if (!region) {
+    throw new Error("AWS region not configured. Set AMPLIFY_AWS_REGION or AWS_REGION environment variable.");
   }
   
-  if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
-    throw new Error("AWS credentials not configured. Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables.");
+  if (!accessKeyId || !secretAccessKey) {
+    throw new Error("AWS credentials not configured. Set AMPLIFY_AWS_ACCESS_KEY_ID and AMPLIFY_AWS_SECRET_ACCESS_KEY environment variables.");
   }
 
   return new S3Client({
-    region: process.env.AWS_REGION,
+    region: region,
     credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      accessKeyId: accessKeyId,
+      secretAccessKey: secretAccessKey,
     },
   });
 }

@@ -28,20 +28,25 @@ import {
 } from "@aws-sdk/client-athena";
 
 // Initialize Athena client with credentials from environment variables
+// Note: Amplify doesn't allow AWS_ prefixed variables, so we use AMPLIFY_AWS_ prefix
 const getAthenaClient = () => {
-  if (!process.env.AWS_REGION) {
-    throw new Error("AWS_REGION environment variable is required");
+  const region = process.env.AMPLIFY_AWS_REGION || process.env.AWS_REGION;
+  const accessKeyId = process.env.AMPLIFY_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.AMPLIFY_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
+  
+  if (!region) {
+    throw new Error("AWS region not configured. Set AMPLIFY_AWS_REGION or AWS_REGION environment variable.");
   }
   
-  if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
-    throw new Error("AWS credentials not configured. Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables.");
+  if (!accessKeyId || !secretAccessKey) {
+    throw new Error("AWS credentials not configured. Set AMPLIFY_AWS_ACCESS_KEY_ID and AMPLIFY_AWS_SECRET_ACCESS_KEY environment variables.");
   }
 
   return new AthenaClient({
-    region: process.env.AWS_REGION,
+    region: region,
     credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      accessKeyId: accessKeyId,
+      secretAccessKey: secretAccessKey,
     },
   });
 };
@@ -244,9 +249,13 @@ export async function GET(request: Request) {
   try {
     // Validate required environment variables before proceeding
     const missingVars: string[] = [];
-    if (!process.env.AWS_REGION) missingVars.push("AWS_REGION");
-    if (!process.env.AWS_ACCESS_KEY_ID) missingVars.push("AWS_ACCESS_KEY_ID");
-    if (!process.env.AWS_SECRET_ACCESS_KEY) missingVars.push("AWS_SECRET_ACCESS_KEY");
+    const region = process.env.AMPLIFY_AWS_REGION || process.env.AWS_REGION;
+    const accessKeyId = process.env.AMPLIFY_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
+    const secretAccessKey = process.env.AMPLIFY_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
+    
+    if (!region) missingVars.push("AMPLIFY_AWS_REGION (or AWS_REGION)");
+    if (!accessKeyId) missingVars.push("AMPLIFY_AWS_ACCESS_KEY_ID (or AWS_ACCESS_KEY_ID)");
+    if (!secretAccessKey) missingVars.push("AMPLIFY_AWS_SECRET_ACCESS_KEY (or AWS_SECRET_ACCESS_KEY)");
     
     if (missingVars.length > 0) {
       return NextResponse.json(

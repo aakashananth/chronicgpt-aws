@@ -5,10 +5,11 @@
 Configure these environment variables in the AWS Amplify Console under **App settings > Environment variables**:
 
 ### AWS Credentials (Required)
+**Important:** Amplify doesn't allow environment variables starting with "AWS_", so use the `AMPLIFY_AWS_` prefix instead:
 ```
-AWS_REGION=us-east-1
-AWS_ACCESS_KEY_ID=your-access-key-id
-AWS_SECRET_ACCESS_KEY=your-secret-access-key
+AMPLIFY_AWS_REGION=us-east-1
+AMPLIFY_AWS_ACCESS_KEY_ID=your-access-key-id
+AMPLIFY_AWS_SECRET_ACCESS_KEY=your-secret-access-key
 ```
 
 ### Athena Configuration (Required)
