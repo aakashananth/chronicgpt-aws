@@ -125,6 +125,10 @@ export async function GET(
     return NextResponse.json(result);
   } catch (error: any) {
     console.error("[S3] Error fetching explanation:", error);
+    console.error("[S3] Error details:", JSON.stringify(error, null, 2));
+    console.error("[S3] Error name:", error?.name);
+    console.error("[S3] Error code:", error?.$metadata?.httpStatusCode);
+    console.error("[S3] Error message:", error?.message);
     
     // Handle 404 (file not found) gracefully
     if (error.name === "NoSuchKey" || error.$metadata?.httpStatusCode === 404) {
@@ -139,11 +143,27 @@ export async function GET(
     }
     
     const errorMessage = error?.message || "Unknown error occurred";
+    const statusCode = error?.$metadata?.httpStatusCode || 500;
+    
+    // Provide more helpful error messages
+    let helpfulMessage = errorMessage;
+    if (errorMessage.includes("credentials") || error?.name === "CredentialsProviderError") {
+      helpfulMessage = "AWS credentials are missing or invalid. The IAM role may not have proper permissions, or explicit credentials are required.";
+    } else if (errorMessage.includes("region")) {
+      helpfulMessage = "AWS region is not configured. Set AMPLIFY_AWS_REGION environment variable.";
+    } else if (errorMessage.includes("AccessDenied") || errorMessage.includes("permission") || error?.name === "AccessDenied") {
+      helpfulMessage = "AWS credentials don't have permission to access S3. Check IAM role permissions for S3 read access.";
+    } else if (errorMessage.includes("NoSuchBucket") || errorMessage.includes("bucket")) {
+      helpfulMessage = `S3 bucket not found or not accessible. Check EXPLANATIONS_BUCKET_NAME environment variable.`;
+    }
     
     return NextResponse.json(
       {
         error: "Failed to fetch explanation from S3",
-        details: errorMessage,
+        details: helpfulMessage,
+        originalError: errorMessage,
+        errorName: error?.name,
+        statusCode: statusCode,
       },
       { status: 500 }
     );
