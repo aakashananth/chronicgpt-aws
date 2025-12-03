@@ -43,6 +43,9 @@ const getAthenaClient = () => {
     region: region,
   };
   
+  console.log("[Athena] Credential check - accessKeyId exists:", !!accessKeyId);
+  console.log("[Athena] Credential check - secretAccessKey exists:", !!secretAccessKey);
+  
   if (accessKeyId && secretAccessKey) {
     // Use explicit credentials
     config.credentials = {
@@ -54,6 +57,7 @@ const getAthenaClient = () => {
     // Don't set credentials - SDK will use default credential provider chain
     // In Amplify Lambda, this will use the execution role's credentials
     console.log("[Athena] Using default credential provider chain (IAM role)");
+    console.log("[Athena] Warning: No explicit credentials found, relying on IAM role");
   }
 
   return new AthenaClient(config);
