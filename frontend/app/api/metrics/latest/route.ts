@@ -376,18 +376,24 @@ export async function GET(request: Request) {
     return NextResponse.json({ data: normalized });
   } catch (error: any) {
     console.error("[Athena] Error:", error);
+    console.error("[Athena] Error details:", JSON.stringify(error, null, 2));
+    console.error("[Athena] Error name:", error?.name);
+    console.error("[Athena] Error code:", error?.$metadata?.httpStatusCode);
+    console.error("[Athena] Error message:", error?.message);
     
     const errorMessage = error?.message || "Unknown error occurred";
     const statusCode = error?.$metadata?.httpStatusCode || 500;
     
     // Provide more helpful error messages
     let helpfulMessage = errorMessage;
-    if (errorMessage.includes("credentials")) {
-      helpfulMessage = "AWS credentials are missing or invalid. Check AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY.";
+    if (errorMessage.includes("credentials") || error?.name === "CredentialsProviderError") {
+      helpfulMessage = "AWS credentials are missing or invalid. The IAM role may not have proper permissions, or explicit credentials are required.";
     } else if (errorMessage.includes("region")) {
-      helpfulMessage = "AWS region is not configured. Set AWS_REGION environment variable.";
-    } else if (errorMessage.includes("AccessDenied") || errorMessage.includes("permission")) {
-      helpfulMessage = "AWS credentials don't have permission to query Athena. Check IAM permissions.";
+      helpfulMessage = "AWS region is not configured. Set AMPLIFY_AWS_REGION environment variable.";
+    } else if (errorMessage.includes("AccessDenied") || errorMessage.includes("permission") || error?.name === "AccessDeniedException") {
+      helpfulMessage = "AWS credentials don't have permission to query Athena. Check IAM role permissions for Athena access.";
+    } else if (errorMessage.includes("Database") || errorMessage.includes("does not exist")) {
+      helpfulMessage = `Athena database or view not found. Check ATHENA_DATABASE_NAME and ATHENA_VIEW_NAME environment variables.`;
     }
 
     return NextResponse.json(
@@ -395,6 +401,8 @@ export async function GET(request: Request) {
         error: "Failed to fetch metrics from Athena",
         details: helpfulMessage,
         originalError: errorMessage,
+        errorName: error?.name,
+        statusCode: statusCode,
       },
       { status: statusCode }
     );
