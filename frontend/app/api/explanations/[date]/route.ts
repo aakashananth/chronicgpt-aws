@@ -51,6 +51,13 @@ export async function GET(
   { params }: { params: Promise<{ date: string }> | { date: string } }
 ) {
   try {
+    // Debug: Log available environment variables (without sensitive values)
+    console.log("[API] Checking environment variables...");
+    console.log("[API] ULTRAHUMAN_PATIENT_ID exists:", !!process.env.ULTRAHUMAN_PATIENT_ID);
+    console.log("[API] ULTRAHUMAN_EMAIL exists:", !!process.env.ULTRAHUMAN_EMAIL);
+    console.log("[API] EXPLANATIONS_BUCKET_NAME:", process.env.EXPLANATIONS_BUCKET_NAME);
+    console.log("[API] HEALTH_RESULTS_PROCESSED_BUCKET:", process.env.HEALTH_RESULTS_PROCESSED_BUCKET);
+    
     const s3Client = getS3Client();
     
     // Get date from route parameter (handle both sync and async params)
@@ -74,10 +81,11 @@ export async function GET(
     }
     
     // Get patient ID from environment variable (required)
-    if (!process.env.ULTRAHUMAN_PATIENT_ID && !process.env.ULTRAHUMAN_EMAIL) {
+    const patientId = process.env.ULTRAHUMAN_PATIENT_ID || process.env.ULTRAHUMAN_EMAIL;
+    if (!patientId) {
+      console.error("[API] Missing patient ID. Available env vars:", Object.keys(process.env).filter(k => k.includes("ULTRAHUMAN") || k.includes("PATIENT")));
       throw new Error("ULTRAHUMAN_PATIENT_ID or ULTRAHUMAN_EMAIL environment variable is required");
     }
-    const patientId = process.env.ULTRAHUMAN_PATIENT_ID || process.env.ULTRAHUMAN_EMAIL!;
     
     // S3 bucket name (required)
     if (!process.env.EXPLANATIONS_BUCKET_NAME && !process.env.HEALTH_RESULTS_PROCESSED_BUCKET) {

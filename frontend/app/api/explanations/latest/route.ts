@@ -56,6 +56,13 @@ function getYesterdayDate(): string {
 
 export async function GET() {
   try {
+    // Debug: Log available environment variables (without sensitive values)
+    console.log("[API] Checking environment variables...");
+    console.log("[API] ULTRAHUMAN_PATIENT_ID exists:", !!process.env.ULTRAHUMAN_PATIENT_ID);
+    console.log("[API] ULTRAHUMAN_EMAIL exists:", !!process.env.ULTRAHUMAN_EMAIL);
+    console.log("[API] EXPLANATIONS_BUCKET_NAME:", process.env.EXPLANATIONS_BUCKET_NAME);
+    console.log("[API] HEALTH_RESULTS_PROCESSED_BUCKET:", process.env.HEALTH_RESULTS_PROCESSED_BUCKET);
+    
     // Validate required environment variables before proceeding
     const missingVars: string[] = [];
     const region = process.env.AMPLIFY_AWS_REGION || process.env.AWS_REGION;
@@ -65,11 +72,15 @@ export async function GET() {
     if (!process.env.EXPLANATIONS_BUCKET_NAME && !process.env.HEALTH_RESULTS_PROCESSED_BUCKET) {
       missingVars.push("EXPLANATIONS_BUCKET_NAME or HEALTH_RESULTS_PROCESSED_BUCKET");
     }
-    if (!process.env.ULTRAHUMAN_PATIENT_ID && !process.env.ULTRAHUMAN_EMAIL) {
+    
+    const patientId = process.env.ULTRAHUMAN_PATIENT_ID || process.env.ULTRAHUMAN_EMAIL;
+    if (!patientId) {
       missingVars.push("ULTRAHUMAN_PATIENT_ID or ULTRAHUMAN_EMAIL");
     }
     
     if (missingVars.length > 0) {
+      console.error("[API] Missing env vars:", missingVars);
+      console.error("[API] Available env vars:", Object.keys(process.env).filter(k => k.includes("ULTRAHUMAN") || k.includes("PATIENT") || k.includes("BUCKET")));
       return NextResponse.json(
         {
           error: "Missing required environment variables",
@@ -84,12 +95,6 @@ export async function GET() {
     
     // Get yesterday's date
     const date = getYesterdayDate();
-    
-    // Get patient ID from environment variable (required)
-    if (!process.env.ULTRAHUMAN_PATIENT_ID && !process.env.ULTRAHUMAN_EMAIL) {
-      throw new Error("ULTRAHUMAN_PATIENT_ID or ULTRAHUMAN_EMAIL environment variable is required");
-    }
-    const patientId = process.env.ULTRAHUMAN_PATIENT_ID || process.env.ULTRAHUMAN_EMAIL!;
     
     // S3 bucket name (required)
     if (!process.env.EXPLANATIONS_BUCKET_NAME && !process.env.HEALTH_RESULTS_PROCESSED_BUCKET) {
