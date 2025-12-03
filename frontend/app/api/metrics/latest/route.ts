@@ -27,8 +27,8 @@ import {
   QueryExecutionState,
 } from "@aws-sdk/client-athena";
 
-// Initialize Athena client with credentials from environment variables
-// Note: Amplify doesn't allow AWS_ prefixed variables, so we use AMPLIFY_AWS_ prefix
+// Initialize Athena client with credentials from environment variables or IAM role
+// Note: In Amplify, the service role is automatically used if credentials are not provided
 const getAthenaClient = () => {
   const region = process.env.AMPLIFY_AWS_REGION || process.env.AWS_REGION;
   const accessKeyId = process.env.AMPLIFY_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
@@ -38,17 +38,20 @@ const getAthenaClient = () => {
     throw new Error("AWS region not configured. Set AMPLIFY_AWS_REGION or AWS_REGION environment variable.");
   }
   
-  if (!accessKeyId || !secretAccessKey) {
-    throw new Error("AWS credentials not configured. Set AMPLIFY_AWS_ACCESS_KEY_ID and AMPLIFY_AWS_SECRET_ACCESS_KEY environment variables.");
-  }
-
-  return new AthenaClient({
+  // If credentials are provided, use them; otherwise use IAM role (default in Amplify)
+  const config: any = {
     region: region,
-    credentials: {
+  };
+  
+  if (accessKeyId && secretAccessKey) {
+    config.credentials = {
       accessKeyId: accessKeyId,
       secretAccessKey: secretAccessKey,
-    },
-  });
+    };
+  }
+  // If no credentials provided, AWS SDK will use the default credential chain (IAM role in Amplify)
+
+  return new AthenaClient(config);
 };
 
 // Poll query status until completion
@@ -250,12 +253,10 @@ export async function GET(request: Request) {
     // Validate required environment variables before proceeding
     const missingVars: string[] = [];
     const region = process.env.AMPLIFY_AWS_REGION || process.env.AWS_REGION;
-    const accessKeyId = process.env.AMPLIFY_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
-    const secretAccessKey = process.env.AMPLIFY_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
     
     if (!region) missingVars.push("AMPLIFY_AWS_REGION (or AWS_REGION)");
-    if (!accessKeyId) missingVars.push("AMPLIFY_AWS_ACCESS_KEY_ID (or AWS_ACCESS_KEY_ID)");
-    if (!secretAccessKey) missingVars.push("AMPLIFY_AWS_SECRET_ACCESS_KEY (or AWS_SECRET_ACCESS_KEY)");
+    
+    // Credentials are optional - if not provided, will use IAM role (default in Amplify)
     
     if (missingVars.length > 0) {
       return NextResponse.json(

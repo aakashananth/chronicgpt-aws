@@ -19,8 +19,8 @@
 import { NextResponse } from "next/server";
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 
-// Initialize S3 client with credentials from environment variables
-// Note: Amplify doesn't allow AWS_ prefixed variables, so we use AMPLIFY_AWS_ prefix
+// Initialize S3 client with credentials from environment variables or IAM role
+// Note: In Amplify, the service role is automatically used if credentials are not provided
 const getS3Client = () => {
   const region = process.env.AMPLIFY_AWS_REGION || process.env.AWS_REGION;
   const accessKeyId = process.env.AMPLIFY_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
@@ -30,17 +30,20 @@ const getS3Client = () => {
     throw new Error("AWS region not configured. Set AMPLIFY_AWS_REGION or AWS_REGION environment variable.");
   }
   
-  if (!accessKeyId || !secretAccessKey) {
-    throw new Error("AWS credentials not configured. Set AMPLIFY_AWS_ACCESS_KEY_ID and AMPLIFY_AWS_SECRET_ACCESS_KEY environment variables.");
-  }
-
-  return new S3Client({
+  // If credentials are provided, use them; otherwise use IAM role (default in Amplify)
+  const config: any = {
     region: region,
-    credentials: {
+  };
+  
+  if (accessKeyId && secretAccessKey) {
+    config.credentials = {
       accessKeyId: accessKeyId,
       secretAccessKey: secretAccessKey,
-    },
-  });
+    };
+  }
+  // If no credentials provided, AWS SDK will use the default credential chain (IAM role in Amplify)
+
+  return new S3Client(config);
 }
 
 export async function GET(
