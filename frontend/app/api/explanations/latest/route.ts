@@ -29,18 +29,23 @@ const getS3Client = () => {
     throw new Error("AWS region not configured. Set AMPLIFY_AWS_REGION or AWS_REGION environment variable.");
   }
   
-  // If credentials are provided, use them; otherwise use IAM role (default in Amplify)
+  // If explicit credentials are provided, use them; otherwise let SDK use default credential chain (IAM role)
   const config: any = {
     region: region,
   };
   
   if (accessKeyId && secretAccessKey) {
+    // Use explicit credentials
     config.credentials = {
       accessKeyId: accessKeyId,
       secretAccessKey: secretAccessKey,
     };
+    console.log("[S3] Using explicit credentials from environment variables");
+  } else {
+    // Don't set credentials - SDK will use default credential provider chain
+    // In Amplify Lambda, this will use the execution role's credentials
+    console.log("[S3] Using default credential provider chain (IAM role)");
   }
-  // If no credentials provided, AWS SDK will use the default credential chain (IAM role in Amplify)
 
   return new S3Client(config);
 }
