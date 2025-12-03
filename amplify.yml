@@ -5,7 +5,40 @@ applications:
       phases:
         preBuild:
           commands:
+            - cd frontend
             - npm ci
+            # Export environment variables for runtime (Next.js API routes)
+            - |
+              if [ -n "$AMPLIFY_AWS_REGION" ]; then
+                echo "AMPLIFY_AWS_REGION=$AMPLIFY_AWS_REGION" >> .env.production
+              fi
+              if [ -n "$AMPLIFY_AWS_ACCESS_KEY_ID" ]; then
+                echo "AMPLIFY_AWS_ACCESS_KEY_ID=$AMPLIFY_AWS_ACCESS_KEY_ID" >> .env.production
+              fi
+              if [ -n "$AMPLIFY_AWS_SECRET_ACCESS_KEY" ]; then
+                echo "AMPLIFY_AWS_SECRET_ACCESS_KEY=$AMPLIFY_AWS_SECRET_ACCESS_KEY" >> .env.production
+              fi
+              if [ -n "$ATHENA_DATABASE_NAME" ]; then
+                echo "ATHENA_DATABASE_NAME=$ATHENA_DATABASE_NAME" >> .env.production
+              fi
+              if [ -n "$ATHENA_VIEW_NAME" ]; then
+                echo "ATHENA_VIEW_NAME=$ATHENA_VIEW_NAME" >> .env.production
+              fi
+              if [ -n "$ATHENA_OUTPUT_LOCATION" ]; then
+                echo "ATHENA_OUTPUT_LOCATION=$ATHENA_OUTPUT_LOCATION" >> .env.production
+              fi
+              if [ -n "$EXPLANATIONS_BUCKET_NAME" ]; then
+                echo "EXPLANATIONS_BUCKET_NAME=$EXPLANATIONS_BUCKET_NAME" >> .env.production
+              fi
+              if [ -n "$HEALTH_RESULTS_PROCESSED_BUCKET" ]; then
+                echo "HEALTH_RESULTS_PROCESSED_BUCKET=$HEALTH_RESULTS_PROCESSED_BUCKET" >> .env.production
+              fi
+              if [ -n "$ULTRAHUMAN_PATIENT_ID" ]; then
+                echo "ULTRAHUMAN_PATIENT_ID=$ULTRAHUMAN_PATIENT_ID" >> .env.production
+              fi
+              if [ -n "$ULTRAHUMAN_EMAIL" ]; then
+                echo "ULTRAHUMAN_EMAIL=$ULTRAHUMAN_EMAIL" >> .env.production
+              fi
         build:
           commands:
             - npm run build
