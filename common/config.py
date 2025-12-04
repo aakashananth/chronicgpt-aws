@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     AZURE_OPENAI_DEPLOYMENT: str = "gpt-4o-mini"
     AZURE_OPENAI_API_VERSION: str = "2024-02-15-preview"
 
+    # Bedrock invocation lambda
+    BEDROCK_LAMBDA_NAME: str = ""
+
     # Logging configuration
     LOG_LEVEL: str = "INFO"
 
